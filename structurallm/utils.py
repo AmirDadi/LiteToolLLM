@@ -3,14 +3,39 @@ import litellm.utils
 from litellm import acompletion, completion
 from .errors import ModelCapabilityError, FunctionExecutionError, MaxRecursionError
 import asyncio
+import inspect
 
 def convert_tools_to_api_format(tools):
-    dict_tools = None
-    if tools:
-        dict_tools = [{
-            "type": "function",
-            "function": litellm.utils.function_to_dict(tool)
-        } for tool in tools]
+    if not tools:
+        return None
+    
+    dict_tools = []
+    for tool in tools:
+        # Check if tool is already a callable function
+        if callable(tool) and not hasattr(tool, 'func'):
+            dict_tools.append({
+                "type": "function",
+                "function": litellm.utils.function_to_dict(tool)
+            })
+        # Check if tool is a Tool instance
+        elif hasattr(tool, 'func') and callable(tool.func):
+            # If it's a Tool instance, use the provided parameters or convert from the function
+            if tool.parameters:
+                function_dict = {
+                    "name": tool.name,
+                    "description": tool.description,
+                    "parameters": tool.parameters
+                }
+            else:
+                function_dict = litellm.utils.function_to_dict(tool.func)
+                function_dict["name"] = tool.name
+                function_dict["description"] = tool.description
+            
+            dict_tools.append({
+                "type": "function",
+                "function": function_dict
+            })
+    
     return dict_tools
 
 def validate_model_capabilities(model, response_model, tools):
@@ -30,7 +55,12 @@ def get_tool_calls(raw_response):
 def get_function_mapping(tools):
     mapping = {}
     for tool in tools:
-        mapping[tool.__name__] = tool
+        if callable(tool) and not hasattr(tool, 'func'):
+            # Regular function
+            mapping[tool.__name__] = tool
+        elif hasattr(tool, 'func') and callable(tool.func):
+            # Tool instance
+            mapping[tool.name] = tool
     return mapping
 
 def _extract_function_details(tool_call, function_mapping):
@@ -38,7 +68,13 @@ def _extract_function_details(tool_call, function_mapping):
     function_to_call = function_mapping.get(function_name, None)
     if function_to_call is None:
         raise ValueError(f"Function {function_name} name mismatch in tool calling")
+    
     function_args = json.loads(tool_call.function.arguments)
+    
+    # If it's a Tool instance, get the actual function
+    if hasattr(function_to_call, 'func'):
+        function_to_call = function_to_call.func
+        
     return function_name, function_to_call, function_args
 
 def handle_tool_calls(raw_response, tools):
@@ -87,17 +123,20 @@ async def handle_tool_calls_async(raw_response, tools):
     if not tool_calls:
         return []
 
-
-
     async def execute_tool_call(tool_call, tools):
         function_mapping = get_function_mapping(tools)
         function_name, function_to_call, function_args = _extract_function_details(tool_call, function_mapping)
-        result = await function_to_call(**function_args)
+        
+        # Check if function is async
+        if inspect.iscoroutinefunction(function_to_call):
+            result = await function_to_call(**function_args)
+        else:
+            result = function_to_call(**function_args)
         
         return {
             "role": "tool",
             "tool_call_id": tool_call.get("id"),
-            "content": json.dumps(result),
+            "content": json.dumps(result) if isinstance(result, dict) else result,
             "name": function_name
         }
 

@@ -1,4 +1,29 @@
 # structurallm/tools.py
+from typing import Callable, Dict, Any, Optional
+
+class Tool:
+    """
+    A class to represent a callable tool for LLM function calling.
+    
+    Attributes:
+        func (Callable): The function to be called
+        name (str): The name of the tool (defaults to function name)
+        description (str): Description of what the tool does
+        parameters (Dict[str, Any]): Parameters schema for the tool
+    """
+    def __init__(self, 
+                 func: Callable, 
+                 name: Optional[str] = None, 
+                 description: Optional[str] = None,
+                 parameters: Optional[Dict[str, Any]] = None):
+        self.func = func
+        self.name = name or func.__name__
+        self.description = description or func.__doc__ or ""
+        self.parameters = parameters or {}
+    
+    def __call__(self, *args, **kwargs):
+        return self.func(*args, **kwargs)
+
 def get_current_weather(location: str) -> dict:
     """
     Return weather
