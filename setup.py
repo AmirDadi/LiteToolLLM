@@ -3,7 +3,8 @@ from setuptools import setup, find_packages
 setup(
     name="litecallllm",
     version="0.1.0",
-    packages=find_packages(),
+    packages=["structurallm"],
+    py_modules=["__init__"],
     install_requires=[
         "litellm>=1.30.7",
         "pydantic>=2.5.2",

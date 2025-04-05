@@ -10,8 +10,12 @@ import asyncio
 from typing import List, Dict, Any
 from pydantic import BaseModel
 
-# Import from litecallllm (installed via pip)
-from litecallllm import astructured_completion, Tool
+# Try to import from litecallllm first, fall back to structurallm if needed
+try:
+    from litecallllm import astructured_completion, Tool
+except ImportError:
+    from structurallm import astructured_completion, Tool
+    print("Note: Imported from structurallm module (the original package module)")
 
 # Define a Pydantic model for multiple weather locations
 class WeatherReport(BaseModel):
