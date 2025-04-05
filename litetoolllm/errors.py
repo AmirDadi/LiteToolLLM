@@ -1,4 +1,4 @@
-# structurallm/errors.py
+# litetoolllm/errors.py
 class ModelCapabilityError(Exception):
     pass
 

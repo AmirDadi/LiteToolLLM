@@ -3,11 +3,10 @@ import os
 import pytest
 import litellm
 
-from litetoollm.errors import ModelCapabilityError, StructuredValidationError
-from litetoollm.core import structured_completion
-from litetoollm.models import Temperature, Temperatures
-from litetoollm.tools import get_current_weather, convert_fahrenheit_to_celsius
-
+from litetoolllm.errors import ModelCapabilityError, StructuredValidationError
+from litetoolllm.core import structured_completion
+from litetoolllm.models import Temperature, Temperatures
+from litetoolllm.tools import get_current_weather, convert_fahrenheit_to_celsius
 class TestFunctionCalling:
     def test_single_tool_execution(self):
         """Test basic tool calling with weather lookup"""
@@ -116,7 +115,7 @@ class TestValidation:
         def mock_invalid_completion(*args, **kwargs):
             return {"choices": [{"message": {"content": 'invalid json'}}]}
 
-        monkeypatch.setattr("structurallm.core.completion", mock_invalid_completion)
+        monkeypatch.setattr("litetoolllm.core.completion", mock_invalid_completion)
 
         with pytest.raises(StructuredValidationError):
             structured_completion(

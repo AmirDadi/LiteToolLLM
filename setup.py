@@ -1,9 +1,9 @@
 from setuptools import setup, find_packages
 
 setup(
-    name="litetoollm",
+    name="litetoolllm",
     version="0.1.0",
-    packages=["litetoollm"],
+    packages=["litetoolllm"],
     py_modules=["__init__"],
     install_requires=[
         "litellm>=1.30.7",
@@ -17,12 +17,12 @@ setup(
         ],
     },
     python_requires=">=3.7",
-    description="LiteCallLLM - A lightweight wrapper for LLM function calling and structured output validation",
+    description="LiteToolLLM - A lightweight wrapper for LLM tool calling and structured output validation",
     long_description=open("readme.md", "r").read(),
     long_description_content_type="text/markdown",
     author="AIR",
     author_email="amirezadadfarnia@gmail.com",
-    url="https://github.com/AmirDadi/LiteCallLLM",
+    url="https://github.com/AmirDadi/Litetoollm",
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",

@@ -1,6 +1,6 @@
-# LiteCallLLM
+# LiteToolLLM
 
-LiteCallLLM is a lightweight wrapper built on top of [litellm](https://github.com/BerriAI/litellm) that seamlessly integrates structured output validation with transparent tool calling for large language models. While litellm already provides powerful features such as synchronous (`completion`) and asynchronous (`acompletion`) completions, JSON-based response schemas, and built-in function calling capabilities, LiteCallLLM extends these functionalities with a clear, debuggable mechanism for directly invoking tools based on LLM outputs—without the complexity of traditional agent frameworks.
+LiteToolLLM is a lightweight wrapper built on top of [litellm](https://github.com/BerriAI/litellm) that seamlessly integrates structured output validation with transparent tool calling for large language models. While litellm already provides powerful features such as synchronous (`completion`) and asynchronous (`acompletion`) completions, JSON-based response schemas, and built-in function calling capabilities, litetoolllm extends these functionalities with a clear, debuggable mechanism for directly invoking tools based on LLM outputs—without the complexity of traditional agent frameworks.
 
 **Key Features:**
 
@@ -11,13 +11,13 @@ LiteCallLLM is a lightweight wrapper built on top of [litellm](https://github.co
   Use Pydantic models to ensure that responses conform to your expected schema, enhancing reliability and simplifying downstream processing.
 
 - **Automated Tool Call Handling:**  
-  No need to manually handle tool call responses or convert outputs. LiteCallLLM automatically processes tool responses, streamlining your workflow.
+  No need to manually handle tool call responses or convert outputs. litetoolllm automatically processes tool responses, streamlining your workflow.
 
 - **Full litellm Integration:**  
   Leverage all the features of litellm—including synchronous and asynchronous completions, JSON mode support, and function calling—while gaining additional control and transparency.
 
 - **Minimalistic and Intuitive:**  
-  Designed to avoid the overhead and complexity of frameworks like LangChain or LangGraph, LiteCallLLM offers a straightforward, powerful solution for advanced LLM interactions.
+  Designed to avoid the overhead and complexity of frameworks like LangChain or LangGraph, litetoolllm offers a straightforward, powerful solution for advanced LLM interactions.
 - **Recursion Handling**: 
   Configurable depth for complex tool chains
 - **Sync/Async Support**:
@@ -25,16 +25,16 @@ LiteCallLLM is a lightweight wrapper built on top of [litellm](https://github.co
 
 ## Installation
 
-You can install LiteCallLLM directly from the GitHub repository:
+You can install litetoolllm directly from the GitHub repository:
 
 ```bash
-pip install git+https://github.com/AmirDadi/LiteCallLLM.git
+pip install git+https://github.com/AmirDadi/litetoolllm.git
 ```
 
 For development installation with additional testing dependencies:
 
 ```bash
-pip install git+https://github.com/AmirDadi/LiteCallLLM.git#egg=litecallllm[dev]
+pip install git+https://github.com/AmirDadi/litetoolllm.git#egg=litetoolllm[dev]
 ```
 
 ## Usage Examples
@@ -44,7 +44,7 @@ pip install git+https://github.com/AmirDadi/LiteCallLLM.git#egg=litecallllm[dev]
 Invoke a tool (e.g., a weather lookup) and have the response validated against a structured schema.
 
 ```python
-from litecallllm import structured_completion
+from litetoolllm import structured_completion
 from pydantic import BaseModel
 
 class Temperature(BaseModel):
@@ -66,7 +66,7 @@ response = structured_completion(
 )
 ```
 ### 2. Single Tool Execution without Schema
-Use LiteCallLLM without providing a response model. The output will be returned as a plain string.
+Use litetoolllm without providing a response model. The output will be returned as a plain string.
 
 ```python
 response = structured_completion(

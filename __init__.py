@@ -6,11 +6,11 @@ This package extends litellm with structured output validation and transparent t
 
 __version__ = "0.1.0"
 
-# Import core functionality from structurallm and re-export
-from litetoollm.core import structured_completion, astructured_completion, UnifiedResponse
-from litetoollm.tools import Tool
-from litetoollm.errors import StructuredValidationError
-from litetoollm.utils import convert_tools_to_api_format
+# Import core functionality from litetoolllm and re-export
+from litetoolllm.core import structured_completion, astructured_completion, UnifiedResponse
+from litetoolllm.tools import Tool
+from litetoolllm.errors import StructuredValidationError
+from litetoolllm.utils import convert_tools_to_api_format
 
 # Make these accessible directly from litecallllm
 __all__ = [

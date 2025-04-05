@@ -1,4 +1,4 @@
-# structurallm/core.py
+# litetoolllm/core.py
 from typing import Type, Any, List, Optional, Callable
 from pydantic import BaseModel
 from litellm import completion, acompletion

@@ -1,4 +1,4 @@
-# structurallm/models.py
+# litetoolllm/models.py
 from typing import List
 
 from pydantic import BaseModel

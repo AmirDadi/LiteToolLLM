@@ -1,4 +1,4 @@
-# structurallm/__init__.py
+# litetoolllm/__init__.py
 from .core import structured_completion, astructured_completion, UnifiedResponse
 from .tools import Tool
 from .errors import StructuredValidationError

@@ -1,4 +1,4 @@
-# structurallm/tools.py
+# litetoolllm/tools.py
 from typing import Callable, Dict, Any, Optional
 
 class Tool:

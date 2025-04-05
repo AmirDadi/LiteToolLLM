@@ -13,10 +13,10 @@ def test_imports():
             from litecallllm import UnifiedResponse, StructuredValidationError
             print("✅ Successfully imported from 'litecallllm' package!")
         except ImportError:
-            # If that fails, try importing from the structurallm module
-            from litetoollm import structured_completion, astructured_completion, Tool
-            from litetoollm import UnifiedResponse, StructuredValidationError
-            print("✅ Successfully imported from 'structurallm' module!")
+            # If that fails, try importing from the litetoolllm module
+            from litetoolllm import structured_completion, astructured_completion, Tool
+            from litetoolllm import UnifiedResponse, StructuredValidationError
+            print("✅ Successfully imported from 'litetoolllm' module!")
         
         # If we get here, either import worked
         print("\nAvailable components:")
@@ -30,7 +30,7 @@ def test_imports():
         print("\nTo use LiteCallLLM in your projects, add it to your requirements.txt:")
         print("git+https://github.com/AmirDadi/LiteCallLLM.git")
         print("\nIn your code, import using:")
-        print("from structurallm import structured_completion, astructured_completion")
+        print("from litetoolllm import structured_completion, astructured_completion")
         print("# OR")
         print("from litecallllm import structured_completion, astructured_completion  # if this works in your environment")
         
@@ -39,8 +39,8 @@ def test_imports():
         print(f"❌ Error importing the library: {e}")
         print("\nMake sure you've installed the package with:")
         print("pip install git+https://github.com/AmirDadi/LiteCallLLM.git")
-        print("\nIf you've already installed it, try importing directly from the structurallm module:")
-        print("from structurallm import structured_completion, astructured_completion")
+        print("\nIf you've already installed it, try importing directly from the litetoolllm module:")
+        print("from litetoolllm import structured_completion, astructured_completion")
         return False
 
 if __name__ == "__main__":
