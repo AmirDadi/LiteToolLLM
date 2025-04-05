@@ -1,5 +1,5 @@
 """
-Test if LiteCallLLM is installed correctly.
+Test if liteToolLlm is installed correctly.
 
 This script imports key components from the library to verify that
 the installation is working properly.
@@ -8,15 +8,11 @@ the installation is working properly.
 def test_imports():
     try:
         # Try importing directly from the top-level package
-        try:
-            from litecallllm import structured_completion, astructured_completion, Tool
-            from litecallllm import UnifiedResponse, StructuredValidationError
-            print("✅ Successfully imported from 'litecallllm' package!")
-        except ImportError:
+
             # If that fails, try importing from the litetoolllm module
-            from litetoolllm import structured_completion, astructured_completion, Tool
-            from litetoolllm import UnifiedResponse, StructuredValidationError
-            print("✅ Successfully imported from 'litetoolllm' module!")
+        from litetoolllm import structured_completion, astructured_completion, Tool
+        from litetoolllm import UnifiedResponse, StructuredValidationError
+        print("✅ Successfully imported from 'litetoolllm' module!")
         
         # If we get here, either import worked
         print("\nAvailable components:")
@@ -27,8 +23,8 @@ def test_imports():
         print("  - StructuredValidationError")
         
         # Print installation instructions
-        print("\nTo use LiteCallLLM in your projects, add it to your requirements.txt:")
-        print("git+https://github.com/AmirDadi/LiteCallLLM.git")
+        print("\nTo use liteToolLlm in your projects, add it to your requirements.txt:")
+        print("git+https://github.com/AmirDadi/liteToolLlm.git")
         print("\nIn your code, import using:")
         print("from litetoolllm import structured_completion, astructured_completion")
         print("# OR")
@@ -38,7 +34,7 @@ def test_imports():
     except ImportError as e:
         print(f"❌ Error importing the library: {e}")
         print("\nMake sure you've installed the package with:")
-        print("pip install git+https://github.com/AmirDadi/LiteCallLLM.git")
+        print("pip install git+https://github.com/AmirDadi/liteToolLlm.git")
         print("\nIf you've already installed it, try importing directly from the litetoolllm module:")
         print("from litetoolllm import structured_completion, astructured_completion")
         return False

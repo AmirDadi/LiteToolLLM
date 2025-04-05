@@ -1,5 +1,5 @@
 """
-Simple example demonstrating LiteCallLLM usage.
+Simple example demonstrating liteToolLlm usage.
 
 This example shows how to use the structured_completion function with a Pydantic model
 to validate the output structure and use tool calling.
@@ -9,7 +9,7 @@ import os
 import sys
 from typing import List
 from pydantic import BaseModel
-from litecallllm import structured_completion, Tool
+from litetoolllm import structured_completion, Tool
 
 # Define a Pydantic model for the structured output
 class Weather(BaseModel):

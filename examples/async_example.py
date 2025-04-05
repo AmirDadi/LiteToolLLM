@@ -1,5 +1,5 @@
 """
-Async example demonstrating LiteCallLLM usage.
+Async example demonstrating liteToolLlm usage.
 
 This example shows how to use the astructured_completion function with
 asynchronous tool functions and parallel tool execution.
@@ -10,12 +10,7 @@ import asyncio
 from typing import List, Dict, Any
 from pydantic import BaseModel
 
-# Try to import from litecallllm first, fall back to litetoolllm if needed
-try:
-    from litecallllm import astructured_completion, Tool
-except ImportError:
-    from litetoolllm import astructured_completion, Tool
-    print("Note: Imported from litetoolllm module (the original package module)")
+from litetoolllm import astructured_completion, Tool
 
 # Define a Pydantic model for multiple weather locations
 class WeatherReport(BaseModel):

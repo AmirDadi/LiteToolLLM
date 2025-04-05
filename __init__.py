@@ -1,5 +1,5 @@
 """
-LiteCallLLM - A lightweight wrapper for LLM function calling and structured output validation
+liteToolLlm - A lightweight wrapper for LLM function calling and structured output validation
 
 This package extends litellm with structured output validation and transparent tool calling.
 """
