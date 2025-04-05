@@ -14,8 +14,8 @@ def test_imports():
             print("✅ Successfully imported from 'litecallllm' package!")
         except ImportError:
             # If that fails, try importing from the structurallm module
-            from structurallm import structured_completion, astructured_completion, Tool
-            from structurallm import UnifiedResponse, StructuredValidationError
+            from litetoollm import structured_completion, astructured_completion, Tool
+            from litetoollm import UnifiedResponse, StructuredValidationError
             print("✅ Successfully imported from 'structurallm' module!")
         
         # If we get here, either import worked

@@ -3,10 +3,10 @@ import os
 import pytest
 import litellm
 
-from structurallm.errors import ModelCapabilityError, StructuredValidationError
-from structurallm.core import structured_completion
-from structurallm.models import Temperature, Temperatures
-from structurallm.tools import get_current_weather, convert_fahrenheit_to_celsius
+from litetoollm.errors import ModelCapabilityError, StructuredValidationError
+from litetoollm.core import structured_completion
+from litetoollm.models import Temperature, Temperatures
+from litetoollm.tools import get_current_weather, convert_fahrenheit_to_celsius
 
 class TestFunctionCalling:
     def test_single_tool_execution(self):

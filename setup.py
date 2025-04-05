@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(
-    name="litecallllm",
+    name="litetoollm",
     version="0.1.0",
     packages=["structurallm"],
     py_modules=["__init__"],

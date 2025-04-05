@@ -14,7 +14,7 @@ from pydantic import BaseModel
 try:
     from litecallllm import astructured_completion, Tool
 except ImportError:
-    from structurallm import astructured_completion, Tool
+    from litetoollm import astructured_completion, Tool
     print("Note: Imported from structurallm module (the original package module)")
 
 # Define a Pydantic model for multiple weather locations

@@ -1,8 +1,8 @@
 import os
 import pytest
-from structurallm.core import astructured_completion
-from structurallm.models import Temperature, Temperatures
-from structurallm.tools import aget_current_weather, aconvert_fahrenheit_to_celsius
+from litetoollm.core import astructured_completion
+from litetoollm.models import Temperature, Temperatures
+from litetoollm.tools import aget_current_weather, aconvert_fahrenheit_to_celsius
 
 pytestmark = pytest.mark.asyncio
 
