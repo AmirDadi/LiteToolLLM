@@ -1,6 +1,6 @@
 # LiteCallLLM
 
-LiteCallLLM is a lightweight wrapper built on top of [litellm](https://github.com/litellm/litellm) that seamlessly integrates structured output validation with transparent tool calling for large language models. While litellm already provides powerful features such as synchronous (`completion`) and asynchronous (`acompletion`) completions, JSON-based response schemas, and built-in function calling capabilities, LiteCallLLM extends these functionalities with a clear, debuggable mechanism for directly invoking tools based on LLM outputs—without the complexity of traditional agent frameworks.
+LiteCallLLM is a lightweight wrapper built on top of [litellm](https://github.com/BerriAI/litellm) that seamlessly integrates structured output validation with transparent tool calling for large language models. While litellm already provides powerful features such as synchronous (`completion`) and asynchronous (`acompletion`) completions, JSON-based response schemas, and built-in function calling capabilities, LiteCallLLM extends these functionalities with a clear, debuggable mechanism for directly invoking tools based on LLM outputs—without the complexity of traditional agent frameworks.
 
 **Key Features:**
 
