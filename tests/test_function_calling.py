@@ -15,7 +15,7 @@ class TestFunctionCalling:
             pytest.skip("No API key available")
 
         response = structured_completion(
-            model="gemini/gemini-2.0-flash",
+            model="gpt-4o-mini",
             messages=[{"role": "user", "content": "What is the weather in San Francisco?"}],
             response_model=Temperature,
             tools=[get_current_weather],

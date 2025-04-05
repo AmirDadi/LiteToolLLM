@@ -1,4 +1,3 @@
-
 # LiteCallLLM
 
 LiteCallLLM is a lightweight wrapper built on top of [litellm](https://github.com/litellm/litellm) that seamlessly integrates structured output validation with transparent tool calling for large language models. While litellm already provides powerful features such as synchronous (`completion`) and asynchronous (`acompletion`) completions, JSON-based response schemas, and built-in function calling capabilities, LiteCallLLM extends these functionalities with a clear, debuggable mechanism for directly invoking tools based on LLM outputs—without the complexity of traditional agent frameworks.
@@ -22,7 +21,7 @@ LiteCallLLM is a lightweight wrapper built on top of [litellm](https://github.co
 - **Recursion Handling**: 
   Configurable depth for complex tool chains
 - **Sync/Async Support**:
-  (Async coming soon!)
+  Full support for both synchronous and asynchronous operations with parallel tool execution capabilities.
 
 ## Usage Examples
 
@@ -65,10 +64,51 @@ response = structured_completion(
     parallel_tool_calls=True
 )
 ```
+
+### 4. Async Tool Execution
+Execute tools asynchronously for better performance:
+
+```python
+response = await astructured_completion(
+    model="gpt-4o-mini",
+    messages=[{"role": "user", "content": "What is the weather in San Francisco?"}],
+    response_model=Temperature,
+    tools=[get_current_weather],
+    max_recursion=10
+)
+```
+
+### 5. Async Parallel Tool Execution
+Execute multiple tools in parallel asynchronously:
+
+```python
+response = await astructured_completion(
+    model="gpt-4o-mini",
+    messages=[{"role": "user", "content": "What is the weather in San Francisco and New York?"}],
+    response_model=Temperatures,
+    tools=[get_current_weather],
+    max_recursion=10,
+    parallel_tool_calls=True
+)
+```
+
 ### API Reference
 # structured_completion()
 ```python
 def structured_completion(
+    *,
+    model: str,
+    messages: List[dict],
+    response_model: Optional[Type[BaseModel]] = None,
+    tools: Optional[List[Callable]] = None,
+    max_recursion: int = 3,
+    **kwargs
+) -> UnifiedResponse
+```
+
+# astructured_completion()
+```python
+async def astructured_completion(
     *,
     model: str,
     messages: List[dict],
