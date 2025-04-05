@@ -10,8 +10,12 @@ import sys
 from typing import List
 from pydantic import BaseModel
 
-# Import from litecallllm (installed via pip)
-from litecallllm import structured_completion, Tool
+# Try to import from litecallllm first, fall back to structurallm if needed
+try:
+    from litecallllm import structured_completion, Tool
+except ImportError:
+    from structurallm import structured_completion, Tool
+    print("Note: Imported from structurallm module (the original package module)")
 
 # Define a Pydantic model for the structured output
 class Weather(BaseModel):
