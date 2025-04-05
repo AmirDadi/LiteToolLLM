@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 setup(
     name="litetoollm",
     version="0.1.0",
-    packages=["structurallm"],
+    packages=["litetoollm"],
     py_modules=["__init__"],
     install_requires=[
         "litellm>=1.30.7",
