@@ -23,6 +23,20 @@ LiteCallLLM is a lightweight wrapper built on top of [litellm](https://github.co
 - **Sync/Async Support**:
   Full support for both synchronous and asynchronous operations with parallel tool execution capabilities.
 
+## Installation
+
+You can install LiteCallLLM directly from the GitHub repository:
+
+```bash
+pip install git+https://github.com/AmirDadi/LiteCallLLM.git
+```
+
+For development installation with additional testing dependencies:
+
+```bash
+pip install git+https://github.com/AmirDadi/LiteCallLLM.git#egg=litecallllm[dev]
+```
+
 ## Usage Examples
 
 ### 1. Single Tool Execution
@@ -30,6 +44,19 @@ LiteCallLLM is a lightweight wrapper built on top of [litellm](https://github.co
 Invoke a tool (e.g., a weather lookup) and have the response validated against a structured schema.
 
 ```python
+from litecallllm import structured_completion
+from pydantic import BaseModel
+
+class Temperature(BaseModel):
+    location: str
+    temperature: str
+
+def get_current_weather(location: str) -> dict:
+    """Get the current weather in a given location"""
+    if "San Francisco" in location:
+        return {"location": "San Francisco", "temperature": "68°F"}
+    return {"location": location, "temperature": "unknown"}
+
 response = structured_completion(
     model="gemini/gemini-2.0-flash",
     messages=[{"role": "user", "content": "What is the weather in San Francisco?"}],
@@ -37,13 +64,11 @@ response = structured_completion(
     tools=[get_current_weather],
     max_recursion=10
 )
-
 ```
 ### 2. Single Tool Execution without Schema
 Use LiteCallLLM without providing a response model. The output will be returned as a plain string.
 
 ```python
-
 response = structured_completion(
   model="gpt-4o-mini",
   messages=[{"role": "user", "content": "What is the weather in San Francisco?"}],
