@@ -28,13 +28,13 @@ LiteToolLLM is a lightweight wrapper built on top of [litellm](https://github.co
 You can install litetoolllm directly from the GitHub repository:
 
 ```bash
-pip install git+https://github.com/AmirDadi/litetoolllm.git
+pip install git+https://github.com/AmirDadi/liteToolLlm.git
 ```
 
 For development installation with additional testing dependencies:
 
 ```bash
-pip install git+https://github.com/AmirDadi/litetoolllm.git#egg=litetoolllm[dev]
+pip install git+https://github.com/AmirDadi/liteToolLlm.git#egg=litetoolllm[dev]
 ```
 
 ## Usage Examples
