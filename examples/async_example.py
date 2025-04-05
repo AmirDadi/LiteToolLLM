@@ -7,15 +7,14 @@ asynchronous tool functions and parallel tool execution.
 
 import os
 import asyncio
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from pydantic import BaseModel
-
+import litellm
 from litetoolllm import astructured_completion, Tool
-
 # Define a Pydantic model for multiple weather locations
 class WeatherReport(BaseModel):
-    locations: List[Dict[str, str]]
-    summary: str
+    locations: Optional[List[Dict[str, str]]]
+    summary: Optional[str]
 
 # Define an async tool function
 async def async_get_weather(location: str) -> dict:
@@ -76,7 +75,7 @@ async def main():
         # Use astructured_completion with parallel tool execution
         print("Starting weather query (this will take a moment)...")
         response = await astructured_completion(
-            model="gpt-4o",  # Supported model with function calling capabilities
+            model="gpt-4o-mini",  # Supported model with function calling capabilities
             messages=messages,
             response_model=WeatherReport,
             tools=[weather_tool],

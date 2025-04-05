@@ -6,12 +6,10 @@ to validate the output structure and use tool calling.
 """
 
 import os
-import sys
-from typing import List
+
 from pydantic import BaseModel
 from litetoolllm import structured_completion, Tool
 
-# Define a Pydantic model for the structured output
 class Weather(BaseModel):
     location: str
     temperature: str
