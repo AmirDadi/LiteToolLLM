@@ -24,7 +24,7 @@ class Tool:
     def __call__(self, *args, **kwargs):
         return self.func(*args, **kwargs)
 
-def get_current_weather(location: str) -> dict:
+def get_current_weather(location: str, metadata: dict) -> dict:
     """
     Return weather
     :param location: str
@@ -34,7 +34,7 @@ def get_current_weather(location: str) -> dict:
         return {"location": "San Francisco", "temperature": "68°F"}
     return {"location": location, "temperature": "unknown"}
 
-async def aget_current_weather(location: str) -> dict:
+async def aget_current_weather(location: str, metadata: dict) -> dict:
     """
     Return weather
     :param location: str
@@ -44,7 +44,7 @@ async def aget_current_weather(location: str) -> dict:
         return {"location": "San Francisco", "temperature": "68°F"}
     return {"location": location, "temperature": "unknown"}
 
-def convert_fahrenheit_to_celsius(temp_in_fahrenheit: str) -> dict:
+def convert_fahrenheit_to_celsius(temp_in_fahrenheit: str, metadata: dict) -> dict:
     """
     Return weather
     :param temp_in_fahrenheit: str
@@ -52,7 +52,7 @@ def convert_fahrenheit_to_celsius(temp_in_fahrenheit: str) -> dict:
     """
     return "30 Cel"
 
-async def aconvert_fahrenheit_to_celsius(temp_in_fahrenheit: str) -> dict:
+async def aconvert_fahrenheit_to_celsius(temp_in_fahrenheit: str, metadata: dict) -> dict:
     """
     Return weather
     :param temp_in_fahrenheit: str
