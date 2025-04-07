@@ -19,12 +19,21 @@ def structured_completion(*, model: str, messages: List[dict],
                           response_model: Optional[Type[BaseModel]] = None,
                           tools: Optional[List[Callable]] = None,
                           max_recursion: int = 3,
+                          metadata,
                           **kwargs) -> UnifiedResponse:
     validate_model_capabilities(model, response_model, tools)
-    raw_response = completion(model=model, messages=messages, tools=convert_tools_to_api_format(tools), response_format=response_model, **kwargs)
+    raw_response = completion(model=model, messages=messages, tools=convert_tools_to_api_format(tools), response_format=response_model, metadata=metadata, **kwargs)
 
-    messages, raw_response = _handle_tool_call_loop(kwargs, max_recursion, messages, model, raw_response,
-                                                    response_model, tools)
+    messages, raw_response = _handle_tool_call_loop(
+        kwargs=kwargs,
+        max_recursion=max_recursion,
+        messages=messages,
+        model=model,
+        raw_response=raw_response,
+        response_model=response_model,
+        tools=tools,
+        metadata=metadata,
+    )
 
     response_content = get_content_from_raw_response(raw_response)
     parsed = None
@@ -45,12 +54,20 @@ async def astructured_completion(*, model: str, messages: List[dict],
                                  response_model: Optional[Type[BaseModel]] = None,
                                  tools: Optional[List[Callable]] = None,
                                  max_recursion: int = 3,
+                                 metadata,
                                  **kwargs) -> UnifiedResponse:
     validate_model_capabilities(model, response_model, tools)
     raw_response = await acompletion(model=model, messages=messages, tools=convert_tools_to_api_format(tools), response_format=response_model, **kwargs)
 
-    messages, raw_response = await _handle_tool_call_loop_async(kwargs, max_recursion, messages, model, raw_response,
-                                                    response_model, tools)
+    messages, raw_response = await _handle_tool_call_loop_async(
+        kwargs=kwargs,
+        max_recursion=max_recursion,
+        messages=messages,
+        model=model,
+        raw_response=raw_response,
+        response_model=response_model,
+        tools=tools,
+        metadata=metadata)
 
     response_content = get_content_from_raw_response(raw_response)
     parsed = None

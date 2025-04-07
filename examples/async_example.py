@@ -9,7 +9,6 @@ import os
 import asyncio
 from typing import List, Dict, Any, Optional
 from pydantic import BaseModel
-import litellm
 from litetoolllm import astructured_completion, Tool
 # Define a Pydantic model for multiple weather locations
 class WeatherReport(BaseModel):

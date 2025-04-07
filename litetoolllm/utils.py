@@ -77,7 +77,7 @@ def _extract_function_details(tool_call, function_mapping):
         
     return function_name, function_to_call, function_args
 
-def handle_tool_calls(raw_response, tools):
+def handle_tool_calls(raw_response, tools, metadata):
     tool_calls = get_tool_calls(raw_response)
     function_mapping = get_function_mapping(tools)
     new_messages = []
@@ -87,7 +87,7 @@ def handle_tool_calls(raw_response, tools):
             try:
                 print(f"\nExecuting tool call\n{tool_call}")
                 function_name, function_to_call, function_args = _extract_function_details(tool_call, function_mapping)
-                function_response = function_to_call(**function_args)
+                function_response = function_to_call(**function_args, metadata=metadata)
                 new_messages.append(
                     {
                         "tool_call_id": tool_call.id,
@@ -101,16 +101,16 @@ def handle_tool_calls(raw_response, tools):
         return new_messages
 
 def _handle_tool_call_loop(kwargs, max_recursion, messages, model, raw_response, response_model,
-                           tools):
+                           tools, metadata):
     recursion_depth = 0
     while get_tool_calls(raw_response) is not None:
         recursion_depth += 1
         if recursion_depth and recursion_depth >= max_recursion:
             raise MaxRecursionError("Max recursion error in tool calling")
-        new_messages = handle_tool_calls(raw_response=raw_response, tools=tools)
+        new_messages = handle_tool_calls(raw_response=raw_response, tools=tools, metadata=metadata)
         messages = [*messages, *new_messages]
         raw_response = completion(model=model, messages=messages, tools=convert_tools_to_api_format(tools),
-                                  response_format=response_model, **kwargs)
+                                  response_format=response_model, metadata=metadata, **kwargs)
     if get_content_from_raw_response(raw_response) is not None:
         messages.append({
             "role": "assistant",
@@ -118,7 +118,7 @@ def _handle_tool_call_loop(kwargs, max_recursion, messages, model, raw_response,
         })
     return messages, raw_response
 
-async def handle_tool_calls_async(raw_response, tools):
+async def handle_tool_calls_async(raw_response, tools, metadata):
     tool_calls = get_tool_calls(raw_response)
     if not tool_calls:
         return []
@@ -129,9 +129,9 @@ async def handle_tool_calls_async(raw_response, tools):
         
         # Check if function is async
         if inspect.iscoroutinefunction(function_to_call):
-            result = await function_to_call(**function_args)
+            result = await function_to_call(**function_args, metadata=metadata)
         else:
-            result = function_to_call(**function_args)
+            result = function_to_call(**function_args, metadata=metadata)
         
         return {
             "role": "tool",
@@ -147,16 +147,16 @@ async def handle_tool_calls_async(raw_response, tools):
     return messages
 
 async def _handle_tool_call_loop_async(kwargs, max_recursion, messages, model, raw_response, response_model,
-                           tools):
+                           metadata, tools):
     recursion_depth = 0
     while get_tool_calls(raw_response) is not None:
         recursion_depth += 1
         if recursion_depth and recursion_depth >= max_recursion:
             raise MaxRecursionError("Max recursion error in tool calling")
-        new_messages = await handle_tool_calls_async(raw_response=raw_response, tools=tools)
+        new_messages = await handle_tool_calls_async(raw_response=raw_response, tools=tools, metadata=metadata)
         messages = [*messages, *new_messages]
         raw_response = await acompletion(model=model, messages=messages, tools=convert_tools_to_api_format(tools),
-                                  response_format=response_model, **kwargs)
+                                  response_format=response_model, metadata=metadata, **kwargs)
     if get_content_from_raw_response(raw_response) is not None:
         messages.append({
             "role": "assistant",
