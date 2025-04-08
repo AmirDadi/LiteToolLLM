@@ -142,7 +142,7 @@ async def handle_tool_calls_async(raw_response, tools, metadata):
 
     tasks = [execute_tool_call(tool_call, tools) for tool_call in tool_calls]
     responses = await asyncio.gather(*tasks)
-    messages = [raw_response.choices[0].message, *responses]
+    messages = [raw_response.choices[0].message.model_dump(), *responses]
 
     return messages
 
