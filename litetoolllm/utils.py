@@ -35,6 +35,8 @@ def convert_tools_to_api_format(tools):
                 "type": "function",
                 "function": function_dict
             })
+        else:
+            dict_tools.append(tool)
     
     return dict_tools
 

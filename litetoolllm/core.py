@@ -17,7 +17,7 @@ class UnifiedResponse(BaseModel):
 
 def structured_completion(*, model: str, messages: List[dict],
                           response_model: Optional[Type[BaseModel]] = None,
-                          tools: Optional[List[Callable]] = None,
+                          tools: Optional[List] = None,
                           max_recursion: int = 3,
                           metadata=None,
                           **kwargs) -> UnifiedResponse:
@@ -59,7 +59,7 @@ def structured_completion(*, model: str, messages: List[dict],
 
 async def astructured_completion(*, model: str, messages: List[dict],
                                  response_model: Optional[Type[BaseModel]] = None,
-                                 tools: Optional[List[Callable]] = None,
+                                 tools: Optional[List] = None,
                                  max_recursion: int = 3,
                                  metadata = None,
                                  **kwargs) -> UnifiedResponse:
