@@ -63,7 +63,7 @@ async def astructured_completion(*, model: str, messages: List[dict],
                                  max_recursion: int = 3,
                                  metadata = None,
                                  **kwargs) -> UnifiedResponse:
-    validate_model_capabilities(model, response_model, tools)
+    # validate_model_capabilities(model, response_model, tools)
     raw_response = await acompletion(
         model=model,
         messages=messages,
@@ -72,7 +72,7 @@ async def astructured_completion(*, model: str, messages: List[dict],
         metadata=metadata,
         **kwargs
     )
-
+    metadata.pop('trace_id', None)
     messages, raw_response = await _handle_tool_call_loop_async(
         kwargs=kwargs,
         max_recursion=max_recursion,

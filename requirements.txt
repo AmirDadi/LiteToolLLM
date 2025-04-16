@@ -1,4 +1,4 @@
-litellm>=1.30.7
+litellm>=1.66.0
 pydantic>=2.5.2
 pytest>=7.4.3
 pytest-asyncio>=0.23.2
