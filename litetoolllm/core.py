@@ -72,7 +72,7 @@ async def astructured_completion(*, model: str, messages: List[dict],
         metadata=metadata,
         **kwargs
     )
-    metadata.pop('trace_id', None)
+    # metadata.pop('trace_id', None)
     messages, raw_response = await _handle_tool_call_loop_async(
         kwargs=kwargs,
         max_recursion=max_recursion,
