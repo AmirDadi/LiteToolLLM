@@ -5,6 +5,9 @@ from .errors import ModelCapabilityError, FunctionExecutionError, MaxRecursionEr
 import asyncio
 import inspect
 
+structured_output_prompt = """
+Make the output of last response structured. 
+"""
 def convert_tools_to_api_format(tools):
     if not tools:
         return None
@@ -130,6 +133,7 @@ async def handle_tool_calls_async(raw_response, tools, metadata):
         function_name, function_to_call, function_args = _extract_function_details(tool_call, function_mapping)
         
         # Check if function is async
+        function_args.pop('metadata', None)
         if inspect.iscoroutinefunction(function_to_call):
             result = await function_to_call(**function_args, metadata=metadata)
         else:
@@ -149,7 +153,7 @@ async def handle_tool_calls_async(raw_response, tools, metadata):
     return messages
 
 async def _handle_tool_call_loop_async(kwargs, max_recursion, messages, model, raw_response, response_model,
-                           metadata, tools):
+                           metadata, tools, post_format_response_model=None):
     recursion_depth = 0
     while get_tool_calls(raw_response) is not None:
         recursion_depth += 1
@@ -159,6 +163,14 @@ async def _handle_tool_call_loop_async(kwargs, max_recursion, messages, model, r
         messages = [*messages, *new_messages]
         raw_response = await acompletion(model=model, messages=messages, tools=convert_tools_to_api_format(tools),
                                   response_format=response_model, metadata=metadata, **kwargs)
+    if post_format_response_model:
+        structured_output_messages = [
+            *messages,
+            {"role": "assistant", "content": get_content_from_raw_response(raw_response)},
+            {"role": "system", "content": structured_output_prompt}
+        ]
+        raw_response = await acompletion(model="gemini/gemini-2.0-flash",
+                                         messages=structured_output_messages, metadata=metadata, response_format=post_format_response_model)
     if get_content_from_raw_response(raw_response) is not None:
         messages.append({
             "role": "assistant",

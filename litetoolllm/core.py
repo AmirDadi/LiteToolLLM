@@ -63,7 +63,10 @@ async def astructured_completion(*, model: str, messages: List[dict],
                                  max_recursion: int = 3,
                                  metadata = None,
                                  **kwargs) -> UnifiedResponse:
-    # validate_model_capabilities(model, response_model, tools)
+    post_format_response_model = None
+    if 'gemini' in model and tools and len(tools) > 0 and response_model is not None:
+        post_format_response_model = response_model
+        response_model = None
     raw_response = await acompletion(
         model=model,
         messages=messages,
@@ -72,7 +75,6 @@ async def astructured_completion(*, model: str, messages: List[dict],
         metadata=metadata,
         **kwargs
     )
-    # metadata.pop('trace_id', None)
     messages, raw_response = await _handle_tool_call_loop_async(
         kwargs=kwargs,
         max_recursion=max_recursion,
@@ -81,7 +83,8 @@ async def astructured_completion(*, model: str, messages: List[dict],
         raw_response=raw_response,
         response_model=response_model,
         tools=tools,
-        metadata=metadata
+        metadata=metadata,
+        post_format_response_model=post_format_response_model
     )
 
     response_content = get_content_from_raw_response(raw_response)
@@ -89,6 +92,8 @@ async def astructured_completion(*, model: str, messages: List[dict],
     try:
         if response_model:
             parsed = response_model.parse_raw(response_content)
+        elif post_format_response_model:
+            parsed = post_format_response_model.parse_raw(response_content)
         else:
             parsed = response_content
     except Exception as e:
