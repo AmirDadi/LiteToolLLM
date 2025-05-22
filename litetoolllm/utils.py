@@ -170,7 +170,7 @@ async def _handle_tool_call_loop_async(kwargs, max_recursion, messages, model, r
             {"role": "system", "content": structured_output_prompt}
         ]
         raw_response = await acompletion(model="gemini/gemini-2.0-flash",
-                                         messages=structured_output_messages, metadata=metadata, response_format=post_format_response_model)
+                                         messages=structured_output_messages, response_format=post_format_response_model)
     if get_content_from_raw_response(raw_response) is not None:
         messages.append({
             "role": "assistant",
