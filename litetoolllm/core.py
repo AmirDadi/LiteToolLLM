@@ -64,7 +64,7 @@ async def astructured_completion(*, model: str, messages: List[dict],
                                  metadata = None,
                                  **kwargs) -> UnifiedResponse:
     post_format_response_model = None
-    if 'gemini' in model and tools and len(tools) > 0 and response_model is not None:
+    if 'gemini' in model and tools and len(tools) > 0 and response_model is not None and tools[0].get("googleSearch") is None:
         post_format_response_model = response_model
         response_model = None
     raw_response = await acompletion(
