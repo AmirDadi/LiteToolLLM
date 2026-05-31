@@ -6,7 +6,20 @@ import litellm
 from litetoolllm.errors import ModelCapabilityError, StructuredValidationError
 from litetoolllm.core import structured_completion
 from litetoolllm.models import Temperature, Temperatures
-from litetoolllm.tools import get_current_weather, convert_fahrenheit_to_celsius
+from litetoolllm.tools import get_current_weather, convert_fahrenheit_to_celsius, Tool
+
+
+def get_weather_no_metadata(location: str) -> dict:
+    """Get the current weather in a given location.
+
+    Note: this tool intentionally does NOT declare a `metadata` parameter,
+    to exercise the path where metadata must not be injected.
+    """
+    if "San Francisco" in location:
+        return {"location": "San Francisco", "temperature": "68°F"}
+    return {"location": location, "temperature": "unknown"}
+
+
 class TestFunctionCalling:
     def test_single_tool_execution(self):
         """Test basic tool calling with weather lookup"""
@@ -21,6 +34,39 @@ class TestFunctionCalling:
             max_recursion=10
         )
         assert len(response.messages) == 4
+        assert isinstance(response.content, Temperature)
+
+    def test_single_tool_without_metadata_param(self):
+        """A tool function that does NOT declare a metadata param works end-to-end."""
+        if not os.getenv("OPENAI_API_KEY"):
+            pytest.skip("No API key available")
+
+        response = structured_completion(
+            model="gpt-4o-mini",
+            messages=[{"role": "user", "content": "What is the weather in San Francisco?"}],
+            response_model=Temperature,
+            tools=[get_weather_no_metadata],
+            max_recursion=10
+        )
+        assert isinstance(response.content, Temperature)
+
+    def test_tool_class_name_override(self):
+        """The Tool wrapper (name/description override) works end-to-end."""
+        if not os.getenv("OPENAI_API_KEY"):
+            pytest.skip("No API key available")
+
+        weather_tool = Tool(
+            func=get_weather_no_metadata,
+            name="get_current_weather",
+            description="Returns the current temperature for a given city.",
+        )
+        response = structured_completion(
+            model="gpt-4o-mini",
+            messages=[{"role": "user", "content": "What is the weather in San Francisco?"}],
+            response_model=Temperature,
+            tools=[weather_tool],
+            max_recursion=10
+        )
         assert isinstance(response.content, Temperature)
 
     def test_single_tool_execution_without_schema(self):
