@@ -178,17 +178,64 @@ All completion functions return a `UnifiedResponse` object:
 |-------|------|-------------|
 | `content` | `BaseModel \| str \| None` | The parsed response — a Pydantic model instance if `response_model` was provided, otherwise a plain string |
 | `messages` | `List[dict]` | The full conversation history including tool calls and results, ready to pass back as `messages` for multi-turn conversations |
+| `usage` | `Usage \| None` | Token usage from the final model response (best-effort; `None` if unavailable) |
+| `cost` | `float \| None` | Estimated dollar cost of the final response (best-effort; `None` for unknown/custom models) |
 
 ## Error Handling
 
+Every exception inherits from `LiteToolLLMError`, so you can catch them all in one place:
+
+```python
+from litetoolllm.errors import LiteToolLLMError
+
+try:
+    structured_completion(...)
+except LiteToolLLMError as e:
+    ...  # any litetoolllm error
+```
+
 | Exception | When raised |
 |-----------|-------------|
+| `LiteToolLLMError` | Base class for all errors below |
 | `ModelCapabilityError` | Model doesn't support JSON output or tool calling |
 | `MaxRecursionError` | Tool call chain exceeds `max_recursion` limit |
 | `StructuredValidationError` | LLM output couldn't be parsed into `response_model` |
-| `FunctionExecutionError` | A tool function raised an exception at runtime |
+| `FunctionExecutionError` | A tool function raised at runtime (exposes `.function_name`, `.details`, `.tool_call`; original error in `__cause__`) |
 
 Import from `litetoolllm.errors`.
+
+## Observability & Tracing
+
+Each `UnifiedResponse` carries the final response's `usage` and `cost` for lightweight tracking:
+
+```python
+result = structured_completion(model="gpt-4o", messages=messages, response_model=MyModel)
+print(result.usage)  # token counts
+print(result.cost)   # estimated $ cost
+```
+
+For full tracing, litetoolllm calls LiteLLM directly, so LiteLLM's built-in
+integrations (Langfuse, OpenTelemetry, etc.) work without any wrapper-specific
+setup. Register the callback globally once:
+
+```python
+import litellm
+litellm.success_callback = ["langfuse"]   # set LANGFUSE_PUBLIC_KEY / LANGFUSE_SECRET_KEY env vars
+```
+
+Anything you pass as `metadata=` is forwarded straight to LiteLLM, which Langfuse
+uses for trace correlation (`trace_id`, `session_id`, `tags`, …):
+
+```python
+structured_completion(
+    model="gpt-4o",
+    messages=messages,
+    response_model=MyModel,
+    metadata={"trace_id": "abc-123", "session_id": "user-42", "tags": ["prod"]},
+)
+```
+
+See the [LiteLLM logging docs](https://docs.litellm.ai/docs/observability/langfuse_integration) for other backends.
 
 ### API Reference
 # structured_completion()

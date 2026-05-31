@@ -57,6 +57,22 @@ def validate_model_capabilities(model, response_model, tools):
 def get_content_from_raw_response(raw_response):
     return raw_response.get('choices', [{}])[0].get('message', {}).get('content', '{}')
 
+def get_usage_and_cost(raw_response):
+    """Best-effort extraction of token usage and dollar cost from a model
+    response. Returns ``(usage, cost)`` where either may be ``None`` if the
+    information is unavailable (e.g. an unknown/custom model)."""
+    usage = None
+    cost = None
+    try:
+        usage = raw_response.get('usage')
+    except Exception:
+        logger.debug("Could not read usage from response", exc_info=True)
+    try:
+        cost = litellm.completion_cost(completion_response=raw_response)
+    except Exception:
+        logger.debug("Could not compute completion cost", exc_info=True)
+    return usage, cost
+
 def get_tool_calls(raw_response):
     return raw_response.get('choices', [{}])[0].get('message', {}).get('tool_calls', None)
 
@@ -112,7 +128,8 @@ def handle_tool_calls(raw_response, tools, metadata):
                     }
                 )
             except Exception as e:
-                raise FunctionExecutionError(tool_call, str(e)) from e
+                name = getattr(getattr(tool_call, "function", None), "name", "unknown")
+                raise FunctionExecutionError(name, str(e), tool_call=tool_call) from e
         return new_messages
 
 def _handle_tool_call_loop(kwargs, max_recursion, messages, model, raw_response, response_model,
@@ -138,28 +155,34 @@ async def handle_tool_calls_async(raw_response, tools, metadata):
     if not tool_calls:
         return []
 
-    async def execute_tool_call(tool_call, tools):
-        function_mapping = get_function_mapping(tools)
-        function_name, function_to_call, function_args = _extract_function_details(tool_call, function_mapping)
+    function_mapping = get_function_mapping(tools)
 
-        # Always remove metadata from LLM-provided args (the LLM may echo it back
-        # because it's in the schema), then re-inject our own value if the function wants it.
-        function_args.pop('metadata', None)
-        sig = inspect.signature(function_to_call)
-        accepts_metadata = 'metadata' in sig.parameters
-        if inspect.iscoroutinefunction(function_to_call):
-            result = await function_to_call(**function_args, metadata=metadata) if accepts_metadata else await function_to_call(**function_args)
-        else:
-            result = function_to_call(**function_args, metadata=metadata) if accepts_metadata else function_to_call(**function_args)
-        
-        return {
-            "role": "tool",
-            "tool_call_id": tool_call.get("id"),
-            "content": json.dumps(result) if isinstance(result, dict) else result,
-            "name": function_name
-        }
+    async def execute_tool_call(tool_call):
+        try:
+            logger.debug("Executing tool call: %s", tool_call)
+            function_name, function_to_call, function_args = _extract_function_details(tool_call, function_mapping)
 
-    tasks = [execute_tool_call(tool_call, tools) for tool_call in tool_calls]
+            # Always remove metadata from LLM-provided args (the LLM may echo it back
+            # because it's in the schema), then re-inject our own value if the function wants it.
+            function_args.pop('metadata', None)
+            sig = inspect.signature(function_to_call)
+            accepts_metadata = 'metadata' in sig.parameters
+            if inspect.iscoroutinefunction(function_to_call):
+                result = await function_to_call(**function_args, metadata=metadata) if accepts_metadata else await function_to_call(**function_args)
+            else:
+                result = function_to_call(**function_args, metadata=metadata) if accepts_metadata else function_to_call(**function_args)
+
+            return {
+                "role": "tool",
+                "tool_call_id": tool_call.get("id"),
+                "content": json.dumps(result) if isinstance(result, dict) else result,
+                "name": function_name
+            }
+        except Exception as e:
+            name = getattr(getattr(tool_call, "function", None), "name", "unknown")
+            raise FunctionExecutionError(name, str(e), tool_call=tool_call) from e
+
+    tasks = [execute_tool_call(tool_call) for tool_call in tool_calls]
     responses = await asyncio.gather(*tasks)
     messages = [raw_response.choices[0].message.model_dump(), *responses]
 

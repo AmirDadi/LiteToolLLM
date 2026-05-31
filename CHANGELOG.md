@@ -3,6 +3,22 @@
 All notable changes to this project will be documented in this file.
 
 
+## [0.1.11] - 2026-05-31
+
+### Added
+- `LiteToolLLMError` base exception; every library error now inherits from it, so callers can `except LiteToolLLMError` to catch any error in one place
+- `FunctionExecutionError.tool_call` attribute, exposing the raw model tool-call alongside `function_name` and `details`
+- `UnifiedResponse.usage` and `UnifiedResponse.cost` fields, populated (best-effort) from the final model response for token/cost observability
+- `get_usage_and_cost()` helper in `utils`
+- README: "Observability & Tracing" section documenting the `usage`/`cost` fields and the LiteLLM `success_callback` + `metadata` pattern for Langfuse/OpenTelemetry tracing
+
+### Changed
+- `FunctionExecutionError.function_name` now holds the actual tool name string (previously it received the raw tool-call object)
+- Async tool failures now raise `FunctionExecutionError` (consistent with the sync path) instead of letting the raw exception propagate; the original error is preserved as `__cause__`
+- Added debug logging to the async tool-call path (previously only the sync path logged) and a warning log when response validation fails
+- `RecursionDepthExceedError` is deprecated in favour of `MaxRecursionError` (kept as a subclass of `LiteToolLLMError` for backward compatibility)
+- Async tool execution computes the function mapping once per turn instead of once per tool call
+
 ## [0.1.10] - 2026-05-31
 
 ### Added
