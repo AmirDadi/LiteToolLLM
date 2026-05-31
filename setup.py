@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="litetoolllm",
-    version="0.1.9",
+    version="0.1.10",
     packages=["litetoolllm"],
     py_modules=["__init__"],
     install_requires=[

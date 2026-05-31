@@ -3,6 +3,16 @@
 All notable changes to this project will be documented in this file.
 
 
+## [0.1.10] - 2026-05-31
+
+### Added
+- MIT `LICENSE` file (Copyright Amirreza Dadfarnia (AIR))
+- README: "When to Use litetoolllm" positioning section vs pydantic-ai and LangChain
+- README: model compatibility matrix
+- README: `Tool` class usage example
+- README: `UnifiedResponse` return-type documentation
+- README: error-handling section documenting the exception hierarchy
+
 ## [0.1.9] - 2026-05-31
 
 ### Fixed
