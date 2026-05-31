@@ -13,6 +13,19 @@ All notable changes to this project will be documented in this file.
 - README: `UnifiedResponse` return-type documentation
 - README: error-handling section documenting the exception hierarchy
 
+## [0.1.9] - 2026-05-31
+
+### Fixed
+- Pydantic v2 compatibility: replaced removed `parse_raw()` with `model_validate_json()` in both sync and async paths
+- Tool calling no longer forces every tool to accept a `metadata` parameter; `metadata` is now injected only when the function signature accepts it, and any `metadata` echoed back by the model is stripped first
+
+### Changed
+- Replaced the debug `print()` in tool-call handling with a standard `logging` call (`logging.getLogger(__name__)`)
+
+### Added
+- Deterministic (no-API) unit tests for metadata handling, plus integration tests for metadata-free tools and the `Tool` wrapper
+- `.gitignore` for Python build/test artifacts; stopped tracking `__pycache__`
+
 ## [0.1.1] 2025-04-05
 
 ### Added

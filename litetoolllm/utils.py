@@ -1,9 +1,12 @@
 import json
+import logging
 import litellm.utils
 from litellm import acompletion, completion
 from .errors import ModelCapabilityError, FunctionExecutionError, MaxRecursionError
 import asyncio
 import inspect
+
+logger = logging.getLogger(__name__)
 
 structured_output_prompt = """
 Make the output of last response structured. 
@@ -90,9 +93,16 @@ def handle_tool_calls(raw_response, tools, metadata):
         new_messages.append(raw_response.choices[0].message)
         for tool_call in tool_calls:
             try:
-                print(f"\nExecuting tool call\n{tool_call}")
+                logger.debug("Executing tool call: %s", tool_call)
                 function_name, function_to_call, function_args = _extract_function_details(tool_call, function_mapping)
-                function_response = function_to_call(**function_args, metadata=metadata)
+                # Always remove metadata from LLM-provided args (the LLM may echo it back
+                # because it's in the schema), then re-inject our own value if the function wants it.
+                function_args.pop('metadata', None)
+                sig = inspect.signature(function_to_call)
+                if 'metadata' in sig.parameters:
+                    function_response = function_to_call(**function_args, metadata=metadata)
+                else:
+                    function_response = function_to_call(**function_args)
                 new_messages.append(
                     {
                         "tool_call_id": tool_call.id,
@@ -131,13 +141,16 @@ async def handle_tool_calls_async(raw_response, tools, metadata):
     async def execute_tool_call(tool_call, tools):
         function_mapping = get_function_mapping(tools)
         function_name, function_to_call, function_args = _extract_function_details(tool_call, function_mapping)
-        
-        # Check if function is async
+
+        # Always remove metadata from LLM-provided args (the LLM may echo it back
+        # because it's in the schema), then re-inject our own value if the function wants it.
         function_args.pop('metadata', None)
+        sig = inspect.signature(function_to_call)
+        accepts_metadata = 'metadata' in sig.parameters
         if inspect.iscoroutinefunction(function_to_call):
-            result = await function_to_call(**function_args, metadata=metadata)
+            result = await function_to_call(**function_args, metadata=metadata) if accepts_metadata else await function_to_call(**function_args)
         else:
-            result = function_to_call(**function_args, metadata=metadata)
+            result = function_to_call(**function_args, metadata=metadata) if accepts_metadata else function_to_call(**function_args)
         
         return {
             "role": "tool",
