@@ -57,15 +57,30 @@ pip install git+https://github.com/AmirDadi/liteToolLlm.git#egg=litetoolllm[dev]
 
 | Provider | Structured Output (`response_model`) | Tool Calling (`tools`) | Notes |
 |----------|--------------------------------------|------------------------|-------|
-| OpenAI (gpt-4o, gpt-4o-mini, etc.) | Yes | Yes | Full support |
-| Google Gemini | Yes | Yes | Async recommended |
-| Anthropic Claude | No* | Yes | Use tools-only |
+| OpenAI (gpt-4o, gpt-4o-mini, etc.) | Yes | Yes | Native JSON mode |
+| Google Gemini | Yes | Yes | Native JSON mode |
+| Anthropic Claude | Yes | Yes | Via `final_result` tool-output mode |
 | Mistral | Yes | Yes | |
-| Groq | No | Yes | |
+| Groq | Yes | Yes | Via `final_result` tool-output mode |
 
-*Anthropic structured output via tool-calling workaround is not yet supported in this library.
+litetoolllm picks the path automatically: **native JSON mode** when the model
+supports JSON-schema output, otherwise a **result-function (tool-output) mode**
+that delivers the structured answer through a synthetic `final_result` tool. So
+any model with either JSON-schema *or* tool-calling support can return structured
+output.
 
-litetoolllm delegates model capability checks to litellm — if `litellm.supports_response_schema(model)` returns true, structured output will be attempted.
+Capability detection is delegated to litellm (`litellm.supports_response_schema`
+/ `litellm.supports_function_calling`). When that detection is wrong (common via
+OpenRouter), pass `model_capabilities` to override it:
+
+```python
+structured_completion(
+    model="openrouter/meta-llama/llama-3.3-70b-instruct",
+    messages=[...],
+    response_model=MyModel,
+    model_capabilities={"function_calling": True, "json_mode": False},
+)
+```
 
 ## Usage Examples
 
@@ -247,9 +262,15 @@ def structured_completion(
     response_model: Optional[Type[BaseModel]] = None,
     tools: Optional[List[Callable]] = None,
     max_recursion: int = 3,
+    metadata: Optional[dict] = None,
+    model_capabilities: Optional[dict] = None,
     **kwargs
 ) -> UnifiedResponse
 ```
+
+`model_capabilities` (optional): `{"function_calling": bool, "json_mode": bool}`
+to override litellm's auto-detection for that call. Omitted keys fall back to
+detection.
 
 # astructured_completion()
 ```python
@@ -260,6 +281,8 @@ async def astructured_completion(
     response_model: Optional[Type[BaseModel]] = None,
     tools: Optional[List[Callable]] = None,
     max_recursion: int = 3,
+    metadata: Optional[dict] = None,
+    model_capabilities: Optional[dict] = None,
     **kwargs
 ) -> UnifiedResponse
 ```

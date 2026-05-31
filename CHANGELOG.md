@@ -3,6 +3,39 @@
 All notable changes to this project will be documented in this file.
 
 
+## [0.2.0] - 2026-05-31
+
+### Added
+- Result-function (tool-output) structured-output mode: for models that support
+  tool calling but not native JSON-schema output (e.g. Anthropic Claude,
+  Llama/Groq), `response_model` is now delivered by registering a synthetic
+  `final_result` tool and validating its arguments. This extends structured
+  output to **any** tool-capable model.
+- `model_capabilities` keyword argument on `structured_completion` /
+  `astructured_completion` — an optional `{"function_calling": bool, "json_mode": bool}`
+  override for cases where LiteLLM's auto-detection is wrong (common via
+  OpenRouter). Omitted keys fall back to LiteLLM detection.
+- `litetoolllm/output_modes.py`: a small, pure routing layer
+  (`Capabilities`, `resolve_capabilities`, `OutputMode`, `select_output_mode`,
+  `build_final_result_tool`, `parse_final_result`).
+- Prose-fallback handling: if a model answers in prose instead of calling
+  `final_result`, one forced extraction call requests the structured answer.
+- Deterministic routing tests and live OpenRouter/Gemini tests for the new path
+  (live tests auto-skip without the relevant API key).
+
+### Changed
+- Output-mode routing is now explicit: **native JSON mode is used whenever the
+  model supports it**, and tool-output only fills the gap for tool-capable
+  models lacking JSON-schema support. Existing OpenAI/Gemini behavior is
+  unchanged.
+- Removed the Gemini-specific two-call reformat hack; Gemini `tools` +
+  `response_model` now uses the standard JSON path (verified working
+  end-to-end).
+
+### Backward compatibility
+- Fully backward compatible: the only API change is the additive, keyword-only
+  `model_capabilities` argument. All existing tests pass unchanged.
+
 ## [0.1.11] - 2026-05-31
 
 ### Added

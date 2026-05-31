@@ -2,15 +2,22 @@ import json
 import logging
 import litellm.utils
 from litellm import acompletion, completion
-from .errors import ModelCapabilityError, FunctionExecutionError, MaxRecursionError
+from .errors import (
+    ModelCapabilityError,
+    FunctionExecutionError,
+    MaxRecursionError,
+    StructuredValidationError,
+)
+from .output_modes import (
+    FINAL_RESULT_TOOL_NAME,
+    build_final_result_tool,
+    parse_final_result,
+)
 import asyncio
 import inspect
 
 logger = logging.getLogger(__name__)
 
-structured_output_prompt = """
-Make the output of last response structured. 
-"""
 def convert_tools_to_api_format(tools):
     if not tools:
         return None
@@ -189,7 +196,7 @@ async def handle_tool_calls_async(raw_response, tools, metadata):
     return messages
 
 async def _handle_tool_call_loop_async(kwargs, max_recursion, messages, model, raw_response, response_model,
-                           metadata, tools, post_format_response_model=None):
+                           metadata, tools):
     recursion_depth = 0
     while get_tool_calls(raw_response) is not None:
         recursion_depth += 1
@@ -199,17 +206,155 @@ async def _handle_tool_call_loop_async(kwargs, max_recursion, messages, model, r
         messages = [*messages, *new_messages]
         raw_response = await acompletion(model=model, messages=messages, tools=convert_tools_to_api_format(tools),
                                   response_format=response_model, metadata=metadata, **kwargs)
-    if post_format_response_model:
-        structured_output_messages = [
-            *messages,
-            {"role": "assistant", "content": get_content_from_raw_response(raw_response)},
-            {"role": "system", "content": structured_output_prompt}
-        ]
-        raw_response = await acompletion(model="gemini/gemini-2.0-flash",
-                                         messages=structured_output_messages, response_format=post_format_response_model)
     if get_content_from_raw_response(raw_response) is not None:
         messages.append({
             "role": "assistant",
             "content": get_content_from_raw_response(raw_response)
         })
-    return messages, raw_response 
+    return messages, raw_response
+
+
+# ---------------------------------------------------------------------------
+# Tool-output (result-function) mode
+# ---------------------------------------------------------------------------
+# In this mode the response_model is registered as a synthetic ``final_result``
+# tool. The model delivers its structured answer by "calling" that tool; we
+# detect the call, validate its arguments, and stop. User tools (if any) run on
+# the normal function-calling channel alongside it.
+
+
+def find_final_result_call(raw_response):
+    """Return the ``final_result`` tool call in a response, or ``None``.
+
+    ``final_result`` is the synthetic tool that carries the structured answer,
+    so it is handled specially rather than executed like a user function.
+    """
+    tool_calls = get_tool_calls(raw_response) or []
+    for tool_call in tool_calls:
+        if tool_call.function.name == FINAL_RESULT_TOOL_NAME:
+            return tool_call
+    return None
+
+
+def _force_final_result_tool_choice():
+    """tool_choice value that forces the model to call ``final_result``."""
+    return {"type": "function", "function": {"name": FINAL_RESULT_TOOL_NAME}}
+
+
+# A user-turn prompt for the prose-fallback case. It must end the conversation
+# with a user message: some providers (e.g. Anthropic) reject a forced tool call
+# when the last message is from the assistant ("assistant message prefill").
+_FORCE_FINAL_RESULT_PROMPT = (
+    f"Now return the structured answer by calling the {FINAL_RESULT_TOOL_NAME} "
+    "tool with all fields populated."
+)
+
+
+def _append_forced_extraction_prompt(messages, raw_response):
+    """Record the model's prose answer, then add the forcing user turn."""
+    messages.append({"role": "assistant", "content": get_content_from_raw_response(raw_response)})
+    messages.append({"role": "user", "content": _FORCE_FINAL_RESULT_PROMPT})
+
+
+def _parse_final_result_call(final_call, response_model, raw_response):
+    """Validate a ``final_result`` tool call's arguments into a model instance.
+
+    Validation failures surface as ``StructuredValidationError`` (matching JSON
+    mode), carrying the raw response as ``retry_context``.
+    """
+    try:
+        arguments = json.loads(final_call.function.arguments)
+        return parse_final_result(arguments, response_model)
+    except StructuredValidationError:
+        raise
+    except Exception as e:
+        logger.warning("final_result arguments failed validation: %s", e)
+        raise StructuredValidationError(
+            "Failed to validate final_result arguments", retry_context=raw_response
+        ) from e
+
+
+def run_tool_output_loop(kwargs, max_recursion, messages, model, raw_response,
+                         response_model, tools, metadata):
+    """Drive the synchronous ``final_result`` tool-output path.
+
+    Loops on user tool calls until the model calls ``final_result``. If the
+    model instead answers in prose, a single forced-extraction call asks it to
+    populate ``final_result``. Returns ``(messages, parsed, raw_response)``.
+    """
+    tool_payload = (convert_tools_to_api_format(tools) or []) + [
+        build_final_result_tool(response_model)
+    ]
+    recursion_depth = 0
+    while True:
+        final_call = find_final_result_call(raw_response)
+        if final_call is not None:
+            messages.append(raw_response.choices[0].message)
+            parsed = _parse_final_result_call(final_call, response_model, raw_response)
+            return messages, parsed, raw_response
+
+        if get_tool_calls(raw_response) is None:
+            break  # model answered without tools; force extraction below
+
+        recursion_depth += 1
+        if recursion_depth >= max_recursion:
+            raise MaxRecursionError("Max recursion error in tool calling")
+        new_messages = handle_tool_calls(raw_response=raw_response, tools=tools, metadata=metadata)
+        messages = [*messages, *new_messages]
+        raw_response = completion(model=model, messages=messages, tools=tool_payload,
+                                  tool_choice="auto", metadata=metadata, **kwargs)
+
+    # Prose fallback: one forced extraction call.
+    _append_forced_extraction_prompt(messages, raw_response)
+    raw_response = completion(model=model, messages=messages,
+                              tools=[build_final_result_tool(response_model)],
+                              tool_choice=_force_final_result_tool_choice(),
+                              metadata=metadata, **kwargs)
+    final_call = find_final_result_call(raw_response)
+    if final_call is None:
+        raise StructuredValidationError(
+            "Model did not return final_result", retry_context=raw_response
+        )
+    messages.append(raw_response.choices[0].message)
+    parsed = _parse_final_result_call(final_call, response_model, raw_response)
+    return messages, parsed, raw_response
+
+
+async def run_tool_output_loop_async(kwargs, max_recursion, messages, model, raw_response,
+                                     response_model, tools, metadata):
+    """Async mirror of :func:`run_tool_output_loop`."""
+    tool_payload = (convert_tools_to_api_format(tools) or []) + [
+        build_final_result_tool(response_model)
+    ]
+    recursion_depth = 0
+    while True:
+        final_call = find_final_result_call(raw_response)
+        if final_call is not None:
+            messages.append(raw_response.choices[0].message.model_dump())
+            parsed = _parse_final_result_call(final_call, response_model, raw_response)
+            return messages, parsed, raw_response
+
+        if get_tool_calls(raw_response) is None:
+            break
+
+        recursion_depth += 1
+        if recursion_depth >= max_recursion:
+            raise MaxRecursionError("Max recursion error in tool calling")
+        new_messages = await handle_tool_calls_async(raw_response=raw_response, tools=tools, metadata=metadata)
+        messages = [*messages, *new_messages]
+        raw_response = await acompletion(model=model, messages=messages, tools=tool_payload,
+                                         tool_choice="auto", metadata=metadata, **kwargs)
+
+    _append_forced_extraction_prompt(messages, raw_response)
+    raw_response = await acompletion(model=model, messages=messages,
+                                     tools=[build_final_result_tool(response_model)],
+                                     tool_choice=_force_final_result_tool_choice(),
+                                     metadata=metadata, **kwargs)
+    final_call = find_final_result_call(raw_response)
+    if final_call is None:
+        raise StructuredValidationError(
+            "Model did not return final_result", retry_context=raw_response
+        )
+    messages.append(raw_response.choices[0].message.model_dump())
+    parsed = _parse_final_result_call(final_call, response_model, raw_response)
+    return messages, parsed, raw_response
