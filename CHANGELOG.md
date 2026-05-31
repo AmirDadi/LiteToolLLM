@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 - `FunctionExecutionError.tool_call` attribute, exposing the raw model tool-call alongside `function_name` and `details`
 - `UnifiedResponse.usage` and `UnifiedResponse.cost` fields, populated (best-effort) from the final model response for token/cost observability
 - `get_usage_and_cost()` helper in `utils`
+- README: "Observability & Tracing" section documenting the `usage`/`cost` fields and the LiteLLM `success_callback` + `metadata` pattern for Langfuse/OpenTelemetry tracing
 
 ### Changed
 - `FunctionExecutionError.function_name` now holds the actual tool name string (previously it received the raw tool-call object)
