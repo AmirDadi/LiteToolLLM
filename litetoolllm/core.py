@@ -46,7 +46,7 @@ def structured_completion(*, model: str, messages: List[dict],
     parsed = None
     try:
         if response_model:
-            parsed = response_model.parse_raw(response_content)
+            parsed = response_model.model_validate_json(response_content)
         else:
             parsed = response_content
     except Exception as e:
@@ -91,9 +91,9 @@ async def astructured_completion(*, model: str, messages: List[dict],
     parsed = None
     try:
         if response_model:
-            parsed = response_model.parse_raw(response_content)
+            parsed = response_model.model_validate_json(response_content)
         elif post_format_response_model:
-            parsed = post_format_response_model.parse_raw(response_content)
+            parsed = post_format_response_model.model_validate_json(response_content)
         else:
             parsed = response_content
     except Exception as e:

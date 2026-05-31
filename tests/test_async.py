@@ -6,6 +6,14 @@ from litetoolllm.tools import aget_current_weather, aconvert_fahrenheit_to_celsi
 
 pytestmark = pytest.mark.asyncio
 
+
+async def aget_weather_no_metadata(location: str) -> dict:
+    """Async tool with NO metadata param, to exercise the no-inject path."""
+    if "San Francisco" in location:
+        return {"location": "San Francisco", "temperature": "68°F"}
+    return {"location": location, "temperature": "unknown"}
+
+
 class TestAsyncFunctionCalling:
     async def test_single_tool_execution(self):
         if not os.getenv("OPENAI_API_KEY"):
@@ -19,6 +27,20 @@ class TestAsyncFunctionCalling:
             max_recursion=10
         )
         assert len(response.messages) == 4
+        assert isinstance(response.content, Temperature)
+
+    async def test_single_tool_without_metadata_param(self):
+        """An async tool function with NO metadata param works end-to-end."""
+        if not os.getenv("OPENAI_API_KEY"):
+            pytest.skip("No API key available")
+
+        response = await astructured_completion(
+            model="gpt-4o-mini",
+            messages=[{"role": "user", "content": "What is the weather in San Francisco?"}],
+            response_model=Temperature,
+            tools=[aget_weather_no_metadata],
+            max_recursion=10
+        )
         assert isinstance(response.content, Temperature)
 
     async def test_single_tool_execution_without_schema(self):
