@@ -23,6 +23,22 @@ LiteToolLLM is a lightweight wrapper built on top of [litellm](https://github.co
 - **Sync/Async Support**:
   Full support for both synchronous and asynchronous operations with parallel tool execution capabilities.
 
+## When to Use litetoolllm
+
+litetoolllm is designed for a specific gap: **a single LLM call that may need tools, returning structured output** — without spinning up a full agent.
+
+| | litetoolllm | pydantic-ai | LangChain |
+|---|---|---|---|
+| Setup | 3 lines | ~15 lines | ~20 lines |
+| Use case | Single structured call with tools | Full agent loop | Complex pipelines |
+| Provider coverage | All litellm providers (~100+) | ~10 providers | Many (varies) |
+| Streaming | No | Yes | Yes |
+| Multi-turn agent | Manual (pass `messages` back) | Built-in | Built-in |
+| Overhead | Minimal | Low | High |
+
+**Choose litetoolllm when** you want one clean function call that handles tool resolution and returns a typed result.  
+**Choose pydantic-ai** when you need agent memory, retries, streaming, or dependency injection.
+
 ## Installation
 
 You can install litetoolllm directly from the GitHub repository:
@@ -36,6 +52,20 @@ For development installation with additional testing dependencies:
 ```bash
 pip install git+https://github.com/AmirDadi/liteToolLlm.git#egg=litetoolllm[dev]
 ```
+
+## Model Compatibility
+
+| Provider | Structured Output (`response_model`) | Tool Calling (`tools`) | Notes |
+|----------|--------------------------------------|------------------------|-------|
+| OpenAI (gpt-4o, gpt-4o-mini, etc.) | Yes | Yes | Full support |
+| Google Gemini | Yes | Yes | Async recommended |
+| Anthropic Claude | No* | Yes | Use tools-only |
+| Mistral | Yes | Yes | |
+| Groq | No | Yes | |
+
+*Anthropic structured output via tool-calling workaround is not yet supported in this library.
+
+litetoolllm delegates model capability checks to litellm — if `litellm.supports_response_schema(model)` returns true, structured output will be attempted.
 
 ## Usage Examples
 
@@ -116,6 +146,49 @@ response = await astructured_completion(
     parallel_tool_calls=True
 )
 ```
+
+### 6. Custom Tool Name and Description
+
+Use the `Tool` class to override a function's name, description, or parameter schema as seen by the LLM:
+
+```python
+from litetoolllm import structured_completion, Tool
+
+def _internal_weather_lookup(loc: str) -> dict:
+    return {"location": loc, "temperature": "72°F"}
+
+weather_tool = Tool(
+    func=_internal_weather_lookup,
+    name="get_current_weather",
+    description="Returns the current temperature for a given city.",
+)
+
+response = structured_completion(
+    model="gpt-4o-mini",
+    messages=[{"role": "user", "content": "Weather in New York?"}],
+    tools=[weather_tool],
+)
+```
+
+## Return Type: UnifiedResponse
+
+All completion functions return a `UnifiedResponse` object:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `content` | `BaseModel \| str \| None` | The parsed response — a Pydantic model instance if `response_model` was provided, otherwise a plain string |
+| `messages` | `List[dict]` | The full conversation history including tool calls and results, ready to pass back as `messages` for multi-turn conversations |
+
+## Error Handling
+
+| Exception | When raised |
+|-----------|-------------|
+| `ModelCapabilityError` | Model doesn't support JSON output or tool calling |
+| `MaxRecursionError` | Tool call chain exceeds `max_recursion` limit |
+| `StructuredValidationError` | LLM output couldn't be parsed into `response_model` |
+| `FunctionExecutionError` | A tool function raised an exception at runtime |
+
+Import from `litetoolllm.errors`.
 
 ### API Reference
 # structured_completion()
