@@ -27,17 +27,29 @@ LiteToolLLM is a lightweight wrapper built on top of [litellm](https://github.co
 
 litetoolllm is designed for a specific gap: **a single LLM call that may need tools, returning structured output** — without spinning up a full agent.
 
-| | litetoolllm | pydantic-ai | LangChain |
-|---|---|---|---|
-| Setup | 3 lines | ~15 lines | ~20 lines |
-| Use case | Single structured call with tools | Full agent loop | Complex pipelines |
-| Provider coverage | All litellm providers (~100+) | ~10 providers | Many (varies) |
-| Streaming | No | Yes | Yes |
-| Multi-turn agent | Manual (pass `messages` back) | Built-in | Built-in |
-| Overhead | Minimal | Low | High |
+These three tools sit at different **altitudes**, from "one typed call" to "full agent runtime" — they compose more than they compete:
 
-**Choose litetoolllm when** you want one clean function call that handles tool resolution and returns a typed result.  
-**Choose pydantic-ai** when you need agent memory, retries, streaming, or dependency injection.
+- **litetoolllm** — a thin `litellm` wrapper: *one* call that may resolve tools and returns a typed Pydantic result.
+- **pydantic-ai** — a type-safe single-agent framework: the agent loop, structured output, retries, and dependency injection, batteries included.
+- **LangGraph** — a low-level orchestration runtime: build agents as a stateful graph of nodes/edges with cycles, persistence, and human-in-the-loop.
+
+| | litetoolllm | pydantic-ai | LangGraph |
+|---|---|---|---|
+| Core abstraction | A function call | An `Agent` object | A `StateGraph` (nodes + edges) |
+| Setup | ~3 lines | ~15 lines | ~30+ lines |
+| Structured output | Yes (native JSON *or* `final_result` tool-output) | Yes (first-class) | Manual (validate in a node) |
+| Tool calling | Yes, transparent | Yes | Yes |
+| Multi-step / loops | Manual (pass `messages` back) | Built-in agent loop | Built-in, arbitrary cycles & branching |
+| State / persistence | None (stateless) | Run-scoped + history | Checkpointers (durable, resumable) |
+| Retries / self-correction | Not yet | Yes (`ModelRetry`) | Build as a graph edge |
+| Streaming | No | Yes | Yes |
+| Human-in-the-loop | No | Limited | Yes, first-class |
+| Provider coverage | All litellm providers (~100+) | Growing first-class set | Many (via LangChain) |
+| Overhead / weight | Minimal | Low | High |
+
+**Choose litetoolllm** when you want one clean call that may hit a tool and hands back a typed result, across any provider — and you keep control of the flow yourself (it composes nicely *inside* a LangGraph node).
+**Choose pydantic-ai** when "an agent" is the unit and you want the loop, retries, streaming, and DI without hand-rolling them.
+**Choose LangGraph** when you need a multi-step, branching, resumable workflow with durable state and human approval steps.
 
 ## Installation
 
