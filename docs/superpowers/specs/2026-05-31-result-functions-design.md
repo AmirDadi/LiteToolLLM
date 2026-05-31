@@ -49,24 +49,37 @@ Capabilities resolve from an optional caller override merged over LiteLLM detect
 - `caps.json_mode = model_capabilities["json_mode"]` if provided,
   else `litellm.supports_response_schema(model)`.
 
+**Principle: JSON mode wins whenever it is available; tool-output only fills the gap**
+for models that can call tools but lack native JSON-schema support. This keeps every
+existing OpenAI/Gemini behavior (and its tests) byte-for-byte unchanged, and verified
+testing showed LiteLLM now handles Gemini `tools + response_format` natively — so the
+old Gemini two-call hack is simply deleted, with Gemini routed through the standard JSON
+path.
+
 `select_output_mode(response_model, tools, caps)` implements this table:
 
 | `response_model` | user `tools` | `function_calling` | `json_mode` | → Mode |
 |---|---|---|---|---|
-| yes | yes | yes | any | **TOOL_OUTPUT** (`final_result` + user tools) |
-| yes | yes | no  | —   | raise `ModelCapabilityError` (can't run the tools) |
-| yes | no  | —   | yes | **JSON** (current path, unchanged) |
-| yes | no  | yes | no  | **TOOL_OUTPUT** (`final_result` only) |
-| yes | no  | no  | no  | raise `ModelCapabilityError` |
+| yes | any | (if tools) no | —   | raise `ModelCapabilityError` (can't run the tools) |
+| yes | any | —   | yes | **JSON** (current path, unchanged) — OpenAI, Gemini |
+| yes | any | yes | no  | **TOOL_OUTPUT** (`final_result` + any user tools) — Anthropic, Llama/Groq |
+| yes | any | no  | no  | raise `ModelCapabilityError` |
 | no  | yes | yes | —   | **NONE** — plain tool loop (current path) |
 | no  | yes | no  | —   | raise `ModelCapabilityError` |
 | no  | no  | —   | —   | **NONE** — plain completion (current path) |
 
+Evaluation order (pure function): (1) no `response_model` and no `tools` → `NONE`;
+(2) `tools` present and `function_calling` is False → raise (can't run the tools);
+(3) no `response_model` → `NONE` (plain tool loop); (4) `json_mode` → `JSON`;
+(5) `function_calling` → `TOOL_OUTPUT`; (6) otherwise raise `ModelCapabilityError`.
+
 Consequences:
-- The Gemini `tools + response_model` special-case becomes row 1 (TOOL_OUTPUT) and is
-  deleted.
-- `response_model`-only on a JSON-capable model is exactly today's behavior, so existing
-  OpenAI/Gemini tests keep passing.
+- JSON-capable models (OpenAI, Gemini) always use native JSON mode, with or without
+  tools — identical to today, so existing tests pass unchanged.
+- The Gemini `tools + response_model` two-call hack is deleted; Gemini uses the standard
+  JSON path (verified working end-to-end).
+- Tool-output is exercised only by models with tools but no JSON-schema support
+  (Anthropic, Llama/Groq via OpenRouter), satisfying "any LLM with tool support."
 
 ## Module structure
 
